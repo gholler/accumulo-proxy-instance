@@ -37,17 +37,21 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.admin.ActiveCompaction;
 import org.apache.accumulo.core.client.admin.ActiveCompaction.CompactionReason;
 import org.apache.accumulo.core.client.admin.ActiveCompaction.CompactionType;
+import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.client.admin.ActiveScan;
+import org.apache.accumulo.core.client.admin.CompactionStrategyConfig;
 import org.apache.accumulo.core.client.admin.DiskUsage;
 import org.apache.accumulo.core.client.admin.ScanState;
 import org.apache.accumulo.core.client.admin.ScanType;
 import org.apache.accumulo.core.data.Column;
 import org.apache.accumulo.core.data.ColumnUpdate;
 import org.apache.accumulo.core.data.Condition;
+import org.apache.accumulo.core.data.ConstraintViolationSummary;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.KeyExtent;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import org.apache.accumulo.core.security.NamespacePermission;
 import org.apache.hadoop.io.Text;
 
 /**
@@ -145,6 +149,18 @@ final class ThriftHelper {
     tis.setPriority(is.getPriority());
     tis.setProperties(is.getOptions());
     return tis;
+  }
+  
+  public static org.apache.accumulo.proxy.thrift.CompactionStrategyConfig toThrift(CompactionStrategyConfig config) {
+	  if (config == null) {
+		  return null;
+	  }
+	  
+	  org.apache.accumulo.proxy.thrift.CompactionStrategyConfig tconfig = new org.apache.accumulo.proxy.thrift.CompactionStrategyConfig();
+	  tconfig.setClassName(config.getClassName());
+	  tconfig.setOptions(config.getOptions());
+	  
+	  return null;
   }
 
   public static org.apache.accumulo.proxy.thrift.Key toThrift(Key key) {
@@ -276,12 +292,12 @@ final class ThriftHelper {
 
   }
 
-  public static KeyExtent fromThrift(org.apache.accumulo.proxy.thrift.KeyExtent textent) {
+  public static org.apache.accumulo.core.data.impl.KeyExtent fromThrift(org.apache.accumulo.proxy.thrift.KeyExtent textent) {
     if (textent == null) {
       return null;
     }
 
-    return new KeyExtent(toText(textent.getTableId()), toText(textent.getEndRow()), toText(textent.getPrevEndRow()));
+    return new org.apache.accumulo.core.data.impl.KeyExtent(textent.getTableId(), toText(textent.getEndRow()), toText(textent.getPrevEndRow()));
   }
 
   public static List<Column> fromThriftColumns(List<org.apache.accumulo.proxy.thrift.Column> tcolumns) {
@@ -436,7 +452,7 @@ final class ThriftHelper {
   }
 
   public static MutationsRejectedException fromThrift(org.apache.accumulo.proxy.thrift.MutationsRejectedException mre, Instance instance) {
-    return new MutationsRejectedException(instance, null, null, Collections.singleton(mre.getMsg()), 0, mre);
+	  return new MutationsRejectedException(instance, Collections.emptyList(), Collections.emptyMap(), Collections.singleton(mre.getMsg()), 0, mre);
   }
 
   /**

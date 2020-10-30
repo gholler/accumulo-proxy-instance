@@ -49,7 +49,7 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <accumulo.version>1.6.2</accumulo.version>
+    <accumulo.version>1.9.3</accumulo.version>
     <findbugs.version>3.0.1</findbugs.version>
     <forkCount>1</forkCount>
     <maven.compiler.source>1.7</maven.compiler.source>

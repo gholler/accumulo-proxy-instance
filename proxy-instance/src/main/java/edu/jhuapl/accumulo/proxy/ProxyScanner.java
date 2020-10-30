@@ -168,5 +168,4 @@ class ProxyScanner extends AbstractProxyScanner implements Scanner {
   public int getTimeOut() {
     return (int) this.getTimeout(TimeUnit.SECONDS);
   }
-
 }

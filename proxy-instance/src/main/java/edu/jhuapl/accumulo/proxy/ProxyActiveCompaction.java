@@ -20,102 +20,117 @@ import java.util.List;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.admin.ActiveCompaction;
-import org.apache.accumulo.core.data.KeyExtent;
+import org.apache.accumulo.core.data.impl.KeyExtent;
+import org.apache.accumulo.core.data.TabletId;
+import org.apache.accumulo.core.data.impl.TabletIdImpl;
+import org.apache.hadoop.io.Text;
 
 /**
- * Implementation of an ActiveCompaction for the ProxyInstance. This is basically a data structure to hold all of the provided details about an active
- * compaction.
+ * Implementation of an ActiveCompaction for the ProxyInstance. This is
+ * basically a data structure to hold all of the provided details about an
+ * active compaction.
  */
 class ProxyActiveCompaction extends ActiveCompaction {
 
-  String table;
-  KeyExtent extent;
-  long age;
-  List<String> inputFiles;
-  String outputFile;
-  CompactionType type;
-  CompactionReason reason;
-  String localityGroup;
-  long entriesRead;
-  long entriesWritten;
-  List<IteratorSetting> iterators;
+	String table;
+	KeyExtent extent;
+	long age;
+	List<String> inputFiles;
+	String outputFile;
+	CompactionType type;
+	CompactionReason reason;
+	String localityGroup;
+	long entriesRead;
+	long entriesWritten;
+	List<IteratorSetting> iterators;
+	TabletId tabletId;
 
-  ProxyActiveCompaction(String table, KeyExtent extent, long age, List<String> inputFiles, String outputFile, CompactionType type, CompactionReason reason,
-      String localityGroup, long entriesRead, long entriesWritten, List<IteratorSetting> iterators) {
-    super();
-    this.table = table;
-    this.extent = extent;
-    this.age = age;
-    this.inputFiles = inputFiles;
-    this.outputFile = outputFile;
-    this.type = type;
-    this.reason = reason;
-    this.localityGroup = localityGroup;
-    this.entriesRead = entriesRead;
-    this.entriesWritten = entriesWritten;
-    this.iterators = iterators;
-  }
+	ProxyActiveCompaction(String table, KeyExtent extent, long age, List<String> inputFiles, String outputFile,
+			CompactionType type, CompactionReason reason, String localityGroup, long entriesRead, long entriesWritten,
+			List<IteratorSetting> iterators) {
+		super();
+		this.table = table;
+		this.extent = extent;
+		this.age = age;
+		this.inputFiles = inputFiles;
+		this.outputFile = outputFile;
+		this.type = type;
+		this.reason = reason;
+		this.localityGroup = localityGroup;
+		this.entriesRead = entriesRead;
+		this.entriesWritten = entriesWritten;
+		this.iterators = iterators;
+		this.tabletId = new TabletIdImpl(extent);
+	}
 
-  @Override
-  public String getTable() throws TableNotFoundException {
-    return table;
-  }
+	@Override
+	public String getTable() throws TableNotFoundException {
+		return table;
+	}
 
-  @Override
-  public KeyExtent getExtent() {
-    return extent;
-  }
+	@Override
+	@Deprecated
+	public org.apache.accumulo.core.data.KeyExtent getExtent() {
+		org.apache.accumulo.core.data.KeyExtent oke = new org.apache.accumulo.core.data.KeyExtent(
+				new Text(extent.getTableId()), extent.getEndRow(), extent.getPrevEndRow());
+		return oke;
+	}
 
-  @Override
-  public long getAge() {
-    return age;
-  }
+	@Override
+	public TabletId getTablet() {
+		return new TabletIdImpl(extent);
+	}
 
-  @Override
-  public List<String> getInputFiles() {
-    return inputFiles;
-  }
+	@Override
+	public long getAge() {
+		return age;
+	}
 
-  @Override
-  public String getOutputFile() {
-    return outputFile;
-  }
+	@Override
+	public List<String> getInputFiles() {
+		return inputFiles;
+	}
 
-  @Override
-  public CompactionType getType() {
-    return type;
-  }
+	@Override
+	public String getOutputFile() {
+		return outputFile;
+	}
 
-  @Override
-  public CompactionReason getReason() {
-    return reason;
-  }
+	@Override
+	public CompactionType getType() {
+		return type;
+	}
 
-  @Override
-  public String getLocalityGroup() {
-    return localityGroup;
-  }
+	@Override
+	public CompactionReason getReason() {
+		return reason;
+	}
 
-  @Override
-  public long getEntriesRead() {
-    return entriesRead;
-  }
+	@Override
+	public String getLocalityGroup() {
+		return localityGroup;
+	}
 
-  @Override
-  public long getEntriesWritten() {
-    return entriesWritten;
-  }
+	@Override
+	public long getEntriesRead() {
+		return entriesRead;
+	}
 
-  @Override
-  public List<IteratorSetting> getIterators() {
-    return iterators;
-  }
+	@Override
+	public long getEntriesWritten() {
+		return entriesWritten;
+	}
 
-  @Override
-  public String toString() {
-    return "ProxyActiveCompaction [table=" + table + ", extent=" + extent + ", age=" + age + ", inputFiles=" + inputFiles + ", outputFile=" + outputFile
-        + ", type=" + type + ", reason=" + reason + ", localityGroup=" + localityGroup + ", entriesRead=" + entriesRead + ", entriesWritten=" + entriesWritten
-        + ", iterators=" + iterators + "]";
-  }
+	@Override
+	public List<IteratorSetting> getIterators() {
+		return iterators;
+	}
 
+	@Override
+	public String toString() {
+		return "ProxyActiveCompaction [table=" + table + ", extent=" + extent + ", age=" + age + ", inputFiles="
+				+ inputFiles + ", outputFile=" + outputFile + ", type=" + type + ", reason=" + reason
+				+ ", localityGroup=" + localityGroup + ", entriesRead=" + entriesRead + ", entriesWritten="
+				+ entriesWritten + ", iterators=" + iterators + "]";
+	}
 }

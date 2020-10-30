@@ -19,6 +19,9 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.accumulo.core.client.ScannerBase;
+import org.apache.accumulo.core.client.IteratorSetting.Column;
+import org.apache.accumulo.core.client.sample.SamplerConfiguration;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.proxy.thrift.ScanColumn;
 import org.apache.hadoop.io.Text;
 
@@ -27,64 +30,129 @@ import org.apache.hadoop.io.Text;
  */
 abstract class AbstractProxyScanner implements ScannerBase {
 
-  /**
-   * The connector that created this scanner.
-   */
-  protected ProxyConnector connector;
+	/**
+	 * The connector that created this scanner.
+	 */
+	protected ProxyConnector connector;
 
-  /**
-   * The token used when making proxy requests.
-   */
-  protected ByteBuffer token;
+	/**
+	 * The token used when making proxy requests.
+	 */
+	protected ByteBuffer token;
 
-  /**
-   * Table name for this scanner.
-   */
-  protected String tableName;
+	/**
+	 * Table name for this scanner.
+	 */
+	protected String tableName;
 
-  /**
-   * Id assigned to this scanner by the proxy server.
-   */
-  protected String scannerId = null;
+	/**
+	 * Id assigned to this scanner by the proxy server.
+	 */
+	protected String scannerId = null;
 
-  protected AbstractProxyScanner(ProxyConnector connector, ByteBuffer token, String tableName) {
-    this.connector = connector;
+	protected AbstractProxyScanner(ProxyConnector connector, ByteBuffer token, String tableName) {
+		this.connector = connector;
 
-    this.token = token;
-    this.tableName = tableName;
-  }
+		this.token = token;
+		this.tableName = tableName;
+	}
+	
+	@Override
+	public Authorizations getAuthorizations() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	/****** timeout management ***********/
 
-  public void setTimeout(long timeOut, TimeUnit timeUnit) {
-    // proxy API does not support time outs for scanners
-    throw ExceptionFactory.unsupported();
-  }
+	public void setTimeout(long timeOut, TimeUnit timeUnit) {
+		// proxy API does not support time outs for scanners
+		throw ExceptionFactory.unsupported();
+	}
 
-  public long getTimeout(TimeUnit timeUnit) {
-    // proxy API does not support time outs for scanners
-    throw ExceptionFactory.unsupported();
-  }
+	public long getTimeout(TimeUnit timeUnit) {
+		// proxy API does not support time outs for scanners
+		throw ExceptionFactory.unsupported();
+	}
+	
+	/****** column management *********/
+	
+	@Override
+	public void fetchColumn(Column column) {
+		fetchColumn(column.getColumnFamily(), column.getColumnQualifier());
+	}
 
-  public void fetchColumnFamily(Text col) {
-    fetchColumn(col, null);
-  }
+	public void fetchColumnFamily(Text col) {
+		fetchColumn(col, null);
+	}
 
-  public void fetchColumn(Text colFam, Text colQual) {
-    ScanColumn sc = new ScanColumn();
-    if (colFam != null) {
-      sc.setColFamily(colFam.getBytes());
-    }
-    if (colQual != null) {
-      sc.setColQualifier(colQual.getBytes());
-    }
-    addToFetchOptions(sc);
-  }
+	public void fetchColumn(Text colFam, Text colQual) {
+		ScanColumn sc = new ScanColumn();
+		if (colFam != null) {
+			sc.setColFamily(colFam.getBytes());
+		}
+		if (colQual != null) {
+			sc.setColQualifier(colQual.getBytes());
+		}
+		addToFetchOptions(sc);
+	}
 
-  /**
-   * Subclasses must set themselves up to fetch the given ScanColumn. This allows Scanners and BatchScanners to handle the ScanColumn option differently.
-   * 
-   * @param col
-   *          the column to add to the current set of fetch options
-   */
-  protected abstract void addToFetchOptions(ScanColumn col);
+	/**
+	 * Subclasses must set themselves up to fetch the given ScanColumn. This allows
+	 * Scanners and BatchScanners to handle the ScanColumn option differently.
+	 * 
+	 * @param col the column to add to the current set of fetch options
+	 */
+	protected abstract void addToFetchOptions(ScanColumn col);
+	
+	/********* sampling management *****/
 
+	@Override
+	public void setSamplerConfiguration(SamplerConfiguration samplerConfig) {
+		if (samplerConfig != null) {
+			throw ExceptionFactory.unsupported();
+		}
+	}
+
+	@Override
+	public SamplerConfiguration getSamplerConfiguration() {
+		return null;
+	}
+
+	@Override
+	public void clearSamplerConfiguration() {
+		// Nothing to do.
+	}
+	
+	/**** batch timeout management *****/
+
+	@Override
+	public void setBatchTimeout(long timeOut, TimeUnit timeUnit) {
+		// proxy API does not support time outs for scanners
+		throw ExceptionFactory.unsupported();
+	}
+
+	@Override
+	public long getBatchTimeout(TimeUnit timeUnit) {
+		return 0;
+	}
+
+	/**** classloader context management *******/
+	
+	@Override
+	public void setClassLoaderContext(String classLoaderContext) {
+		if (classLoaderContext != null) {
+			throw ExceptionFactory.unsupported();
+		}
+	}
+
+	@Override
+	public void clearClassLoaderContext() {
+		// Nothing to do.
+	}
+
+	@Override
+	public String getClassLoaderContext() {
+		return null;
+	}
 }
