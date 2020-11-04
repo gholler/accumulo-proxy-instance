@@ -46,7 +46,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.proxy.thrift.AccumuloProxy;
-import org.apache.accumulo.proxy.thrift.CompactionStrategyConfig;
 import org.apache.hadoop.io.Text;
 import org.apache.thrift.TException;
 

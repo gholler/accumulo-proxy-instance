@@ -37,21 +37,20 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.admin.ActiveCompaction;
 import org.apache.accumulo.core.client.admin.ActiveCompaction.CompactionReason;
 import org.apache.accumulo.core.client.admin.ActiveCompaction.CompactionType;
-import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.client.admin.ActiveScan;
 import org.apache.accumulo.core.client.admin.CompactionStrategyConfig;
 import org.apache.accumulo.core.client.admin.DiskUsage;
 import org.apache.accumulo.core.client.admin.ScanState;
 import org.apache.accumulo.core.client.admin.ScanType;
+import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.data.Column;
 import org.apache.accumulo.core.data.ColumnUpdate;
 import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConstraintViolationSummary;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.KeyExtent;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.TabletId;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import org.apache.accumulo.core.security.NamespacePermission;
 import org.apache.hadoop.io.Text;
 
 /**
@@ -452,7 +451,7 @@ final class ThriftHelper {
   }
 
   public static MutationsRejectedException fromThrift(org.apache.accumulo.proxy.thrift.MutationsRejectedException mre, Instance instance) {
-	  return new MutationsRejectedException(instance, Collections.emptyList(), Collections.emptyMap(), Collections.singleton(mre.getMsg()), 0, mre);
+	  return new MutationsRejectedException(instance, Collections.<ConstraintViolationSummary>emptyList(), Collections.<TabletId,Set<SecurityErrorCode>>emptyMap(), Collections.singletonList(mre.getMsg()), 0, mre);
   }
 
   /**
