@@ -41,7 +41,7 @@ public class ConnectorBase {
    * cannot do this with a @BeforeClass because we want to use the type of the subclass to determine if it is a unit or integration test.
    */
   @Before
-  public void prepare() throws TTransportException, AccumuloException, AccumuloSecurityException, InterruptedException {
+  public void prepare() throws TTransportException, AccumuloException, AccumuloSecurityException, Exception {
     if (instance == null) {
       synchronized (ConnectorBase.class) {
         if (instance == null) {
@@ -97,7 +97,7 @@ public class ConnectorBase {
     return Integer.parseInt(getString(key));
   }
 
-  private static void createLocalServer() throws InterruptedException {
+  private static void createLocalServer() throws Exception {
     proxyServerThread = new Thread() {
       public void run() {
         try {
@@ -110,7 +110,8 @@ public class ConnectorBase {
     };
     proxyServerThread.setDaemon(true);
     proxyServerThread.start();
-    Thread.sleep(150);
+    // don't lower this, as minicluster and proxy take a very long time to start
+    Thread.sleep(5000);
   }
 
 }

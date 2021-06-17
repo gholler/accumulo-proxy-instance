@@ -15,9 +15,7 @@
  */
 package edu.jhuapl.accumulo.proxy;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.*;
 
 /**
  * A factory to create standard exceptions for specific conditions.
@@ -86,6 +84,19 @@ final class ExceptionFactory {
   }
 
   /**
+   * Wraps the thrift exception with a core client exception.
+   * 
+   * @param namespaceName
+   *          the namespace name that already exists
+   * @param nee
+   *          the Thrift NamespaceExistsException
+   * @return a new (non-Thrift) NamespaceExistsException
+   */
+  public static NamespaceExistsException namespaceExistsException(String namespaceName, org.apache.accumulo.proxy.thrift.NamespaceExistsException nee) {
+    return new NamespaceExistsException(null, namespaceName, nee.getMsg(), nee);
+  }
+
+  /**
    * Creates a new RuntimeException with the given Throwable as the cause.
    * 
    * @param cause
@@ -109,5 +120,9 @@ final class ExceptionFactory {
   public static ProxyInstanceError noEnumMapping(Enum<?> val, Class<? extends Enum<?>> otherCls) {
     return new ProxyInstanceError("Expected mapping from value " + val + " (" + val.getClass().getCanonicalName() + ") to " + otherCls.getCanonicalName()
         + " but it does not exist.");
+  }
+
+  public static NamespaceNotFoundException namespaceNotFoundException(String namespace, org.apache.accumulo.proxy.thrift.NamespaceNotFoundException nnfe) {
+    return new NamespaceNotFoundException(null, namespace, nnfe.getMessage(), nnfe);
   }
 }
