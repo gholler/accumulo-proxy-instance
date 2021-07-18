@@ -80,16 +80,13 @@ class ProxyTableOperations implements TableOperations {
     create(tableName, true);
   }
 
-	public void create(String tableName, boolean limitVersion)
-			throws AccumuloException, AccumuloSecurityException, TableExistsException {
+  public void create(String tableName, boolean limitVersion) throws AccumuloException, AccumuloSecurityException, TableExistsException {
     create(tableName, limitVersion, TimeType.MILLIS);
   }
 
-	public void create(String tableName, boolean versioningIter, TimeType timeType)
-			throws AccumuloException, AccumuloSecurityException, TableExistsException {
+  public void create(String tableName, boolean versioningIter, TimeType timeType) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 
-		org.apache.accumulo.proxy.thrift.TimeType ttype = org.apache.accumulo.proxy.thrift.TimeType
-				.valueOf(timeType.toString());
+    org.apache.accumulo.proxy.thrift.TimeType ttype = org.apache.accumulo.proxy.thrift.TimeType.valueOf(timeType.toString());
     try {
       client.createTable(token, tableName, versioningIter, ttype);
     } catch (org.apache.accumulo.proxy.thrift.TableExistsException tee) {
@@ -99,8 +96,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void importTable(String tableName, String importDir)
-			throws TableExistsException, AccumuloException, AccumuloSecurityException {
+  public void importTable(String tableName, String importDir) throws TableExistsException, AccumuloException, AccumuloSecurityException {
     try {
       client.importTable(token, tableName, importDir);
     } catch (org.apache.accumulo.proxy.thrift.TableExistsException tee) {
@@ -110,8 +106,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void exportTable(String tableName, String exportDir)
-			throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  public void exportTable(String tableName, String exportDir) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
     try {
       client.exportTable(token, tableName, exportDir);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -121,8 +116,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void addSplits(String tableName, SortedSet<Text> partitionKeys)
-			throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  public void addSplits(String tableName, SortedSet<Text> partitionKeys) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
     Set<ByteBuffer> tsplits = new TreeSet<ByteBuffer>();
     for (Text key : partitionKeys) {
       tsplits.add(ByteBuffer.wrap(key.getBytes()));
@@ -148,8 +142,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Collection<Text> listSplits(String tableName)
-			throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+  public Collection<Text> listSplits(String tableName) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
     return listSplits(tableName, Integer.MAX_VALUE);
   }
 
@@ -164,8 +157,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Collection<Text> listSplits(String tableName, int maxSplits)
-			throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+  public Collection<Text> listSplits(String tableName, int maxSplits) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
     try {
       List<ByteBuffer> list = client.listSplits(token, tableName, maxSplits);
 
@@ -181,12 +173,11 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Text getMaxRow(String tableName, Authorizations auths, Text startRow, boolean startInclusive, Text endRow,
-			boolean endInclusive) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  public Text getMaxRow(String tableName, Authorizations auths, Text startRow, boolean startInclusive, Text endRow, boolean endInclusive)
+      throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
     try {
-			ByteBuffer answer = client.getMaxRow(token, tableName, new HashSet<ByteBuffer>(auths.getAuthorizationsBB()),
-					ThriftHelper.toByteBuffer(startRow), startInclusive, ThriftHelper.toByteBuffer(endRow),
-					endInclusive);
+      ByteBuffer answer = client.getMaxRow(token, tableName, new HashSet<ByteBuffer>(auths.getAuthorizationsBB()), ThriftHelper.toByteBuffer(startRow),
+          startInclusive, ThriftHelper.toByteBuffer(endRow), endInclusive);
       return new Text(answer.array());
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
       throw ExceptionFactory.tableNotFoundException(tableName, tnfe);
@@ -195,8 +186,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void merge(String tableName, Text start, Text end)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public void merge(String tableName, Text start, Text end) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     try {
       client.mergeTablets(token, tableName, ThriftHelper.toByteBuffer(start), ThriftHelper.toByteBuffer(end));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -206,8 +196,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void deleteRows(String tableName, Text start, Text end)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public void deleteRows(String tableName, Text start, Text end) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     try {
       client.deleteRows(token, tableName, ThriftHelper.toByteBuffer(start), ThriftHelper.toByteBuffer(end));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -217,14 +206,13 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void compact(String tableName, Text start, Text end, boolean flush, boolean wait)
-			throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
+  public void compact(String tableName, Text start, Text end, boolean flush, boolean wait) throws AccumuloSecurityException, TableNotFoundException,
+      AccumuloException {
     compact(tableName, start, end, null, flush, wait);
   }
 
   @Override
-	public void compact(String tableName, CompactionConfig config)
-			throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
+  public void compact(String tableName, CompactionConfig config) throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
     try {
       client.compactTable( //
           token, //
@@ -246,8 +234,8 @@ class ProxyTableOperations implements TableOperations {
   }
 
   @Override
-	public void compact(String tableName, Text start, Text end, List<IteratorSetting> iterators, boolean flush,
-			boolean wait) throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
+  public void compact(String tableName, Text start, Text end, List<IteratorSetting> iterators, boolean flush, boolean wait) throws AccumuloSecurityException,
+      TableNotFoundException, AccumuloException {
     final CompactionConfig config = new CompactionConfig();
 
     config.setStartRow(start).setEndRow(end);
@@ -257,8 +245,7 @@ class ProxyTableOperations implements TableOperations {
     compact(tableName, config);
   }
 
-	public void cancelCompaction(String tableName)
-			throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
+  public void cancelCompaction(String tableName) throws AccumuloSecurityException, TableNotFoundException, AccumuloException {
     try {
       client.cancelCompaction(token, tableName);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -278,8 +265,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void clone(String srcTableName, String newTableName, boolean flush, Map<String, String> propertiesToSet,
-			Set<String> propertiesToExclude)
+  public void clone(String srcTableName, String newTableName, boolean flush, Map<String,String> propertiesToSet, Set<String> propertiesToExclude)
       throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
     try {
       client.cloneTable(token, srcTableName, newTableName, flush, propertiesToSet, propertiesToExclude);
@@ -292,8 +278,8 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void rename(String oldTableName, String newTableName)
-			throws AccumuloSecurityException, TableNotFoundException, AccumuloException, TableExistsException {
+  public void rename(String oldTableName, String newTableName) throws AccumuloSecurityException, TableNotFoundException, AccumuloException,
+      TableExistsException {
     try {
       client.renameTable(token, oldTableName, newTableName);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -314,8 +300,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void flush(String tableName, Text start, Text end, boolean wait)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public void flush(String tableName, Text start, Text end, boolean wait) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     try {
       client.flushTable(token, tableName, ThriftHelper.toByteBuffer(start), ThriftHelper.toByteBuffer(end), wait);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -325,8 +310,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void setProperty(String tableName, String property, String value)
-			throws AccumuloException, AccumuloSecurityException {
+  public void setProperty(String tableName, String property, String value) throws AccumuloException, AccumuloSecurityException {
     try {
       client.setProperty(token, property, value);
     } catch (TException e) {
@@ -342,8 +326,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Iterable<Entry<String, String>> getProperties(String tableName)
-			throws AccumuloException, TableNotFoundException {
+  public Iterable<Entry<String,String>> getProperties(String tableName) throws AccumuloException, TableNotFoundException {
     try {
       return client.getTableProperties(token, tableName).entrySet();
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -353,8 +336,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void setLocalityGroups(String tableName, Map<String, Set<Text>> groups)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public void setLocalityGroups(String tableName, Map<String,Set<Text>> groups) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
 
     try {
       Map<String,Set<String>> tgroups = new HashMap<String,Set<String>>();
@@ -392,11 +374,10 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Set<Range> splitRangeByTablets(String tableName, Range range, int maxSplits)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public Set<Range> splitRangeByTablets(String tableName, Range range, int maxSplits) throws AccumuloException, AccumuloSecurityException,
+      TableNotFoundException {
     try {
-			return ThriftHelper.fromThriftRanges(
-					client.splitRangeByTablets(token, tableName, ThriftHelper.toThrift(range), maxSplits));
+      return ThriftHelper.fromThriftRanges(client.splitRangeByTablets(token, tableName, ThriftHelper.toThrift(range), maxSplits));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
       throw ExceptionFactory.tableNotFoundException(tableName, tnfe);
     } catch (TException e) {
@@ -404,8 +385,8 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void importDirectory(String tableName, String dir, String failureDir, boolean setTime)
-			throws TableNotFoundException, IOException, AccumuloException, AccumuloSecurityException {
+  public void importDirectory(String tableName, String dir, String failureDir, boolean setTime) throws TableNotFoundException, IOException, AccumuloException,
+      AccumuloSecurityException {
     try {
       client.importDirectory(token, tableName, dir, failureDir, setTime);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -419,8 +400,7 @@ class ProxyTableOperations implements TableOperations {
     offline(tableName, true);
   }
 
-	public void offline(String tableName, boolean wait)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public void offline(String tableName, boolean wait) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     try {
       client.offlineTable(token, tableName, wait);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -434,8 +414,7 @@ class ProxyTableOperations implements TableOperations {
     online(tableName, true);
   }
 
-	public void online(String tableName, boolean wait)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public void online(String tableName, boolean wait) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     try {
       client.onlineTable(token, tableName, wait);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -464,13 +443,12 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void attachIterator(String tableName, IteratorSetting setting)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public void attachIterator(String tableName, IteratorSetting setting) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     attachIterator(tableName, setting, null);
   }
 
-	public void attachIterator(String tableName, IteratorSetting setting, EnumSet<IteratorScope> scopes)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public void attachIterator(String tableName, IteratorSetting setting, EnumSet<IteratorScope> scopes) throws AccumuloSecurityException, AccumuloException,
+      TableNotFoundException {
     try {
       client.attachIterator(token, tableName, ThriftHelper.toThrift(setting), ThriftHelper.toThrift(scopes));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -480,8 +458,8 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void removeIterator(String tableName, String name, EnumSet<IteratorScope> scopes)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public void removeIterator(String tableName, String name, EnumSet<IteratorScope> scopes) throws AccumuloSecurityException, AccumuloException,
+      TableNotFoundException {
     try {
       client.removeIterator(token, tableName, name, ThriftHelper.toThrift(scopes));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -491,11 +469,10 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public IteratorSetting getIteratorSetting(String tableName, String name, IteratorScope scope)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public IteratorSetting getIteratorSetting(String tableName, String name, IteratorScope scope) throws AccumuloSecurityException, AccumuloException,
+      TableNotFoundException {
     try {
-			return ThriftHelper
-					.fromThrift(client.getIteratorSetting(token, tableName, name, ThriftHelper.toThrift(scope)));
+      return ThriftHelper.fromThrift(client.getIteratorSetting(token, tableName, name, ThriftHelper.toThrift(scope)));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
       throw ExceptionFactory.tableNotFoundException(tableName, tnfe);
     } catch (TException e) {
@@ -503,8 +480,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public Map<String, EnumSet<IteratorScope>> listIterators(String tableName)
-			throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+  public Map<String,EnumSet<IteratorScope>> listIterators(String tableName) throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
     try {
       return ThriftHelper.fromThrift(client.listIterators(token, tableName));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -514,11 +490,9 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public void checkIteratorConflicts(String tableName, IteratorSetting setting, EnumSet<IteratorScope> scopes)
-			throws AccumuloException, TableNotFoundException {
+  public void checkIteratorConflicts(String tableName, IteratorSetting setting, EnumSet<IteratorScope> scopes) throws AccumuloException, TableNotFoundException {
     try {
-			client.checkIteratorConflicts(token, tableName, ThriftHelper.toThrift(setting),
-					ThriftHelper.toThrift(scopes));
+      client.checkIteratorConflicts(token, tableName, ThriftHelper.toThrift(setting), ThriftHelper.toThrift(scopes));
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
       throw ExceptionFactory.tableNotFoundException(tableName, tnfe);
     } catch (TException e) {
@@ -526,8 +500,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public int addConstraint(String tableName, String constraintClassName)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public int addConstraint(String tableName, String constraintClassName) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     try {
       return client.addConstraint(token, tableName, constraintClassName);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {
@@ -555,8 +528,7 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public List<DiskUsage> getDiskUsage(Set<String> tables)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public List<DiskUsage> getDiskUsage(Set<String> tables) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     try {
       return new ArrayList<DiskUsage>(ThriftHelper.fromThriftDiskUsage(client.getDiskUsage(token, tables)));
     } catch (TException e) {
@@ -564,8 +536,8 @@ class ProxyTableOperations implements TableOperations {
     }
   }
 
-	public boolean testClassLoad(String tableName, String className, String asTypeName)
-			throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+  public boolean testClassLoad(String tableName, String className, String asTypeName) throws AccumuloException, AccumuloSecurityException,
+      TableNotFoundException {
     try {
       return client.testClassLoad(token, className, asTypeName);
     } catch (org.apache.accumulo.proxy.thrift.TableNotFoundException tnfe) {

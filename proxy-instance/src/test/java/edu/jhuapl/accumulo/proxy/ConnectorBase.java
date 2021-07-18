@@ -57,7 +57,7 @@ public class ConnectorBase {
           } else {
             createLocalServer();
             locInst = new ProxyInstance("localhost", 45678);
-            locConn = locInst.getConnector("root", new PasswordToken(""));
+            locConn = locInst.getConnector("root", new PasswordToken("secret"));
           }
           instance = locInst;
           connector = locConn;

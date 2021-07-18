@@ -149,17 +149,17 @@ final class ThriftHelper {
     tis.setProperties(is.getOptions());
     return tis;
   }
-  
+
   public static org.apache.accumulo.proxy.thrift.CompactionStrategyConfig toThrift(CompactionStrategyConfig config) {
-	  if (config == null) {
-		  return null;
-	  }
-	  
-	  org.apache.accumulo.proxy.thrift.CompactionStrategyConfig tconfig = new org.apache.accumulo.proxy.thrift.CompactionStrategyConfig();
-	  tconfig.setClassName(config.getClassName());
-	  tconfig.setOptions(config.getOptions());
-	  
-	  return null;
+    if (config == null) {
+      return null;
+    }
+
+    org.apache.accumulo.proxy.thrift.CompactionStrategyConfig tconfig = new org.apache.accumulo.proxy.thrift.CompactionStrategyConfig();
+    tconfig.setClassName(config.getClassName());
+    tconfig.setOptions(config.getOptions());
+
+    return null;
   }
 
   public static org.apache.accumulo.proxy.thrift.Key toThrift(Key key) {
@@ -258,6 +258,8 @@ final class ThriftHelper {
     tcu.setColQualifier(update.getColumnQualifier());
     tcu.setColVisibility(update.getColumnVisibility());
     tcu.setTimestamp(update.getTimestamp());
+    // adding this corrects a bug in insert/delete/reinsert scenario when ts is not explicitly set by client
+    tcu.setTimestampIsSet(update.hasTimestamp());
     tcu.setValue(update.getValue());
     // Work around for ACCUMULO-3474
     if (update.isDeleted()) {
@@ -451,7 +453,8 @@ final class ThriftHelper {
   }
 
   public static MutationsRejectedException fromThrift(org.apache.accumulo.proxy.thrift.MutationsRejectedException mre, Instance instance) {
-	  return new MutationsRejectedException(instance, Collections.<ConstraintViolationSummary>emptyList(), Collections.<TabletId,Set<SecurityErrorCode>>emptyMap(), Collections.singletonList(mre.getMsg()), 0, mre);
+    return new MutationsRejectedException(instance, Collections.<ConstraintViolationSummary> emptyList(),
+        Collections.<TabletId,Set<SecurityErrorCode>> emptyMap(), Collections.singletonList(mre.getMsg()), 0, mre);
   }
 
   /**

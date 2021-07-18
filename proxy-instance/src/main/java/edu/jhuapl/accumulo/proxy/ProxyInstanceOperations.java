@@ -87,11 +87,9 @@ class ProxyInstanceOperations implements InstanceOperations {
     }
   }
 
-	public List<ActiveCompaction> getActiveCompactions(String tserver)
-			throws AccumuloException, AccumuloSecurityException {
+  public List<ActiveCompaction> getActiveCompactions(String tserver) throws AccumuloException, AccumuloSecurityException {
     try {
-			return ThriftHelper.fromThriftActiveCompactions(connector.tableOperations().tableIdMap(),
-					connector.getClient().getActiveCompactions(token, tserver));
+      return ThriftHelper.fromThriftActiveCompactions(connector.tableOperations().tableIdMap(), connector.getClient().getActiveCompactions(token, tserver));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -105,8 +103,7 @@ class ProxyInstanceOperations implements InstanceOperations {
     }
   }
 
-	public boolean testClassLoad(String className, String asTypeName)
-			throws AccumuloException, AccumuloSecurityException {
+  public boolean testClassLoad(String className, String asTypeName) throws AccumuloException, AccumuloSecurityException {
     try {
       return connector.getClient().testClassLoad(token, className, asTypeName);
     } catch (TException e) {

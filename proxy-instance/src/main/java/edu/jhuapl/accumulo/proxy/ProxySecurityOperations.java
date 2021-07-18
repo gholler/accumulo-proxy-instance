@@ -43,209 +43,188 @@ import org.apache.thrift.TException;
 
 class ProxySecurityOperations implements SecurityOperations {
 
-	AccumuloProxy.Iface client;
-	ByteBuffer token;
+  AccumuloProxy.Iface client;
+  ByteBuffer token;
 
-	ProxySecurityOperations(ProxyConnector connector, ByteBuffer token) {
-		this.client = connector.getClient();
-		this.token = token;
-	}
+  ProxySecurityOperations(ProxyConnector connector, ByteBuffer token) {
+    this.client = connector.getClient();
+    this.token = token;
+  }
 
-	@Deprecated
-	public void createUser(String user, byte[] password, Authorizations authorizations)
-			throws AccumuloException, AccumuloSecurityException {
-		createLocalUser(user, new PasswordToken(password));
-		changeUserAuthorizations(user, authorizations);
-	}
+  @Deprecated
+  public void createUser(String user, byte[] password, Authorizations authorizations) throws AccumuloException, AccumuloSecurityException {
+    createLocalUser(user, new PasswordToken(password));
+    changeUserAuthorizations(user, authorizations);
+  }
 
-	public void createLocalUser(String principal, PasswordToken password)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.createLocalUser(token, principal, ByteBuffer.wrap(password.getPassword()));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void createLocalUser(String principal, PasswordToken password) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.createLocalUser(token, principal, ByteBuffer.wrap(password.getPassword()));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	@Deprecated
-	public void dropUser(String user) throws AccumuloException, AccumuloSecurityException {
-		dropLocalUser(user);
-	}
+  @Deprecated
+  public void dropUser(String user) throws AccumuloException, AccumuloSecurityException {
+    dropLocalUser(user);
+  }
 
-	public void dropLocalUser(String principal) throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.dropLocalUser(token, principal);
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void dropLocalUser(String principal) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.dropLocalUser(token, principal);
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	@Deprecated
-	public boolean authenticateUser(String user, byte[] password) throws AccumuloException, AccumuloSecurityException {
-		return this.authenticateUser(user, new PasswordToken(password));
-	}
+  @Deprecated
+  public boolean authenticateUser(String user, byte[] password) throws AccumuloException, AccumuloSecurityException {
+    return this.authenticateUser(user, new PasswordToken(password));
+  }
 
-	public boolean authenticateUser(String principal, AuthenticationToken token)
-			throws AccumuloException, AccumuloSecurityException {
+  public boolean authenticateUser(String principal, AuthenticationToken token) throws AccumuloException, AccumuloSecurityException {
 
-		if (!(token instanceof PasswordToken)) {
-			throw ExceptionFactory.notYetImplemented();
-		}
-		PasswordToken passwd = (PasswordToken) token;
-		try {
-			Map<String, String> properties = new HashMap<String, String>();
-			properties.put("password", new String(passwd.getPassword(), UTF8));
-			return client.authenticateUser(this.token, principal, properties);
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+    if (!(token instanceof PasswordToken)) {
+      throw ExceptionFactory.notYetImplemented();
+    }
+    PasswordToken passwd = (PasswordToken) token;
+    try {
+      Map<String,String> properties = new HashMap<String,String>();
+      properties.put("password", new String(passwd.getPassword(), UTF8));
+      return client.authenticateUser(this.token, principal, properties);
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	@Deprecated
-	public void changeUserPassword(String user, byte[] password) throws AccumuloException, AccumuloSecurityException {
-		changeLocalUserPassword(user, new PasswordToken(password));
-	}
+  @Deprecated
+  public void changeUserPassword(String user, byte[] password) throws AccumuloException, AccumuloSecurityException {
+    changeLocalUserPassword(user, new PasswordToken(password));
+  }
 
-	public void changeLocalUserPassword(String principal, PasswordToken token)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.changeLocalUserPassword(this.token, principal, ByteBuffer.wrap(token.getPassword()));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void changeLocalUserPassword(String principal, PasswordToken token) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.changeLocalUserPassword(this.token, principal, ByteBuffer.wrap(token.getPassword()));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void changeUserAuthorizations(String principal, Authorizations authorizations)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.changeUserAuthorizations(token, principal,
-					new HashSet<ByteBuffer>(authorizations.getAuthorizationsBB()));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void changeUserAuthorizations(String principal, Authorizations authorizations) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.changeUserAuthorizations(token, principal, new HashSet<ByteBuffer>(authorizations.getAuthorizationsBB()));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public Authorizations getUserAuthorizations(String principal) throws AccumuloException, AccumuloSecurityException {
-		try {
-			return new Authorizations(client.getUserAuthorizations(token, principal));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public Authorizations getUserAuthorizations(String principal) throws AccumuloException, AccumuloSecurityException {
+    try {
+      return new Authorizations(client.getUserAuthorizations(token, principal));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	/**
-	 * ProxyAPI specifies AccumuloException and AccumuloSecurityException may be
-	 * thrown. The IllegalArgumentException may be thrown if the
-	 * {@link ThriftHelper#convertEnum(Enum, Class)} fails because the Java and
-	 * Thrift SystemPermission no longer match; this should never happen.
-	 */
-	public boolean hasSystemPermission(String principal, SystemPermission perm)
-			throws AccumuloException, AccumuloSecurityException, InternalError {
-		try {
-			return client.hasSystemPermission(token, principal,
-					ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.SystemPermission.class));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  /**
+   * ProxyAPI specifies AccumuloException and AccumuloSecurityException may be thrown. The IllegalArgumentException may be thrown if the
+   * {@link ThriftHelper#convertEnum(Enum, Class)} fails because the Java and Thrift SystemPermission no longer match; this should never happen.
+   */
+  public boolean hasSystemPermission(String principal, SystemPermission perm) throws AccumuloException, AccumuloSecurityException, InternalError {
+    try {
+      return client.hasSystemPermission(token, principal, ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public boolean hasTablePermission(String principal, String table, TablePermission perm)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			return client.hasTablePermission(token, principal, table,
-					ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.TablePermission.class));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public boolean hasTablePermission(String principal, String table, TablePermission perm) throws AccumuloException, AccumuloSecurityException {
+    try {
+      return client.hasTablePermission(token, principal, table, ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.TablePermission.class));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public boolean hasNamespacePermission(String principal, String namespace, NamespacePermission perm)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			return client.hasNamespacePermission(token, principal, namespace, ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public boolean hasNamespacePermission(String principal, String namespace, NamespacePermission perm) throws AccumuloException, AccumuloSecurityException {
+    try {
+      return client.hasNamespacePermission(token, principal, namespace,
+          ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void grantSystemPermission(String principal, SystemPermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.grantSystemPermission(token, principal,
-					ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+  public void grantSystemPermission(String principal, SystemPermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.grantSystemPermission(token, principal, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
 
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void grantTablePermission(String principal, String table, TablePermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.grantTablePermission(token, principal, table,
-					ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
+  public void grantTablePermission(String principal, String table, TablePermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.grantTablePermission(token, principal, table, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
 
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void grantNamespacePermission(String principal, String namespace, NamespacePermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.grantNamespacePermission(token, principal, namespace, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void grantNamespacePermission(String principal, String namespace, NamespacePermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.grantNamespacePermission(token, principal, namespace,
+          ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void revokeSystemPermission(String principal, SystemPermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.revokeSystemPermission(token, principal,
-					ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+  public void revokeSystemPermission(String principal, SystemPermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.revokeSystemPermission(token, principal, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
 
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void revokeTablePermission(String principal, String table, TablePermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.revokeTablePermission(token, principal, table,
-					ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
+  public void revokeTablePermission(String principal, String table, TablePermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.revokeTablePermission(token, principal, table, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
 
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	public void revokeNamespacePermission(String principal, String namespace, NamespacePermission permission)
-			throws AccumuloException, AccumuloSecurityException {
-		try {
-			client.revokeNamespacePermission(token, principal, namespace, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public void revokeNamespacePermission(String principal, String namespace, NamespacePermission permission) throws AccumuloException, AccumuloSecurityException {
+    try {
+      client.revokeNamespacePermission(token, principal, namespace,
+          ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	@Deprecated
-	public Set<String> listUsers() throws AccumuloException, AccumuloSecurityException {
-		return listLocalUsers();
-	}
+  @Deprecated
+  public Set<String> listUsers() throws AccumuloException, AccumuloSecurityException {
+    return listLocalUsers();
+  }
 
-	public Set<String> listLocalUsers() throws AccumuloException, AccumuloSecurityException {
-		try {
-			return client.listLocalUsers(token);
-		} catch (TException e) {
-			throw ExceptionFactory.accumuloException(e);
-		}
-	}
+  public Set<String> listLocalUsers() throws AccumuloException, AccumuloSecurityException {
+    try {
+      return client.listLocalUsers(token);
+    } catch (TException e) {
+      throw ExceptionFactory.accumuloException(e);
+    }
+  }
 
-	@Override
-	public DelegationToken getDelegationToken(DelegationTokenConfig cfg)
-			throws AccumuloException, AccumuloSecurityException {
-		throw ExceptionFactory.unsupported();
-	}
+  @Override
+  public DelegationToken getDelegationToken(DelegationTokenConfig cfg) throws AccumuloException, AccumuloSecurityException {
+    throw ExceptionFactory.unsupported();
+  }
 }

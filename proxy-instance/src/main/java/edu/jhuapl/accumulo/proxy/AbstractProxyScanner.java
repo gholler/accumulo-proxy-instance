@@ -30,129 +30,129 @@ import org.apache.hadoop.io.Text;
  */
 abstract class AbstractProxyScanner implements ScannerBase {
 
-	/**
-	 * The connector that created this scanner.
-	 */
-	protected ProxyConnector connector;
+  /**
+   * The connector that created this scanner.
+   */
+  protected ProxyConnector connector;
 
-	/**
-	 * The token used when making proxy requests.
-	 */
-	protected ByteBuffer token;
+  /**
+   * The token used when making proxy requests.
+   */
+  protected ByteBuffer token;
 
-	/**
-	 * Table name for this scanner.
-	 */
-	protected String tableName;
+  /**
+   * Table name for this scanner.
+   */
+  protected String tableName;
 
-	/**
-	 * Id assigned to this scanner by the proxy server.
-	 */
-	protected String scannerId = null;
+  /**
+   * Id assigned to this scanner by the proxy server.
+   */
+  protected String scannerId = null;
 
-	protected AbstractProxyScanner(ProxyConnector connector, ByteBuffer token, String tableName) {
-		this.connector = connector;
+  protected AbstractProxyScanner(ProxyConnector connector, ByteBuffer token, String tableName) {
+    this.connector = connector;
 
-		this.token = token;
-		this.tableName = tableName;
-	}
-	
-	@Override
-	public Authorizations getAuthorizations() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	/****** timeout management ***********/
+    this.token = token;
+    this.tableName = tableName;
+  }
 
-	public void setTimeout(long timeOut, TimeUnit timeUnit) {
-		// proxy API does not support time outs for scanners
-		throw ExceptionFactory.unsupported();
-	}
+  @Override
+  public Authorizations getAuthorizations() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 
-	public long getTimeout(TimeUnit timeUnit) {
-		// proxy API does not support time outs for scanners
-		throw ExceptionFactory.unsupported();
-	}
-	
-	/****** column management *********/
-	
-	@Override
-	public void fetchColumn(Column column) {
-		fetchColumn(column.getColumnFamily(), column.getColumnQualifier());
-	}
+  /****** timeout management ***********/
 
-	public void fetchColumnFamily(Text col) {
-		fetchColumn(col, null);
-	}
+  public void setTimeout(long timeOut, TimeUnit timeUnit) {
+    // proxy API does not support time outs for scanners
+    throw ExceptionFactory.unsupported();
+  }
 
-	public void fetchColumn(Text colFam, Text colQual) {
-		ScanColumn sc = new ScanColumn();
-		if (colFam != null) {
-			sc.setColFamily(colFam.getBytes());
-		}
-		if (colQual != null) {
-			sc.setColQualifier(colQual.getBytes());
-		}
-		addToFetchOptions(sc);
-	}
+  public long getTimeout(TimeUnit timeUnit) {
+    // proxy API does not support time outs for scanners
+    throw ExceptionFactory.unsupported();
+  }
 
-	/**
-	 * Subclasses must set themselves up to fetch the given ScanColumn. This allows
-	 * Scanners and BatchScanners to handle the ScanColumn option differently.
-	 * 
-	 * @param col the column to add to the current set of fetch options
-	 */
-	protected abstract void addToFetchOptions(ScanColumn col);
-	
-	/********* sampling management *****/
+  /****** column management *********/
 
-	@Override
-	public void setSamplerConfiguration(SamplerConfiguration samplerConfig) {
-		if (samplerConfig != null) {
-			throw ExceptionFactory.unsupported();
-		}
-	}
+  @Override
+  public void fetchColumn(Column column) {
+    fetchColumn(column.getColumnFamily(), column.getColumnQualifier());
+  }
 
-	@Override
-	public SamplerConfiguration getSamplerConfiguration() {
-		return null;
-	}
+  public void fetchColumnFamily(Text col) {
+    fetchColumn(col, null);
+  }
 
-	@Override
-	public void clearSamplerConfiguration() {
-		// Nothing to do.
-	}
-	
-	/**** batch timeout management *****/
+  public void fetchColumn(Text colFam, Text colQual) {
+    ScanColumn sc = new ScanColumn();
+    if (colFam != null) {
+      sc.setColFamily(colFam.getBytes());
+    }
+    if (colQual != null) {
+      sc.setColQualifier(colQual.getBytes());
+    }
+    addToFetchOptions(sc);
+  }
 
-	@Override
-	public void setBatchTimeout(long timeOut, TimeUnit timeUnit) {
-		// proxy API does not support time outs for scanners
-		throw ExceptionFactory.unsupported();
-	}
+  /**
+   * Subclasses must set themselves up to fetch the given ScanColumn. This allows Scanners and BatchScanners to handle the ScanColumn option differently.
+   * 
+   * @param col
+   *          the column to add to the current set of fetch options
+   */
+  protected abstract void addToFetchOptions(ScanColumn col);
 
-	@Override
-	public long getBatchTimeout(TimeUnit timeUnit) {
-		return 0;
-	}
+  /********* sampling management *****/
 
-	/**** classloader context management *******/
-	
-	@Override
-	public void setClassLoaderContext(String classLoaderContext) {
-		if (classLoaderContext != null) {
-			throw ExceptionFactory.unsupported();
-		}
-	}
+  @Override
+  public void setSamplerConfiguration(SamplerConfiguration samplerConfig) {
+    if (samplerConfig != null) {
+      throw ExceptionFactory.unsupported();
+    }
+  }
 
-	@Override
-	public void clearClassLoaderContext() {
-		// Nothing to do.
-	}
+  @Override
+  public SamplerConfiguration getSamplerConfiguration() {
+    return null;
+  }
 
-	@Override
-	public String getClassLoaderContext() {
-		return null;
-	}
+  @Override
+  public void clearSamplerConfiguration() {
+    // Nothing to do.
+  }
+
+  /**** batch timeout management *****/
+
+  @Override
+  public void setBatchTimeout(long timeOut, TimeUnit timeUnit) {
+    // proxy API does not support time outs for scanners
+    throw ExceptionFactory.unsupported();
+  }
+
+  @Override
+  public long getBatchTimeout(TimeUnit timeUnit) {
+    return 0;
+  }
+
+  /**** classloader context management *******/
+
+  @Override
+  public void setClassLoaderContext(String classLoaderContext) {
+    if (classLoaderContext != null) {
+      throw ExceptionFactory.unsupported();
+    }
+  }
+
+  @Override
+  public void clearClassLoaderContext() {
+    // Nothing to do.
+  }
+
+  @Override
+  public String getClassLoaderContext() {
+    return null;
+  }
 }
