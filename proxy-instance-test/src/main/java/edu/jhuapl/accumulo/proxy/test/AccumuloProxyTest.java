@@ -62,11 +62,11 @@ public class AccumuloProxyTest {
         }
       }
     } finally {
-      try {
+/*      try {
         client.tableOperations().delete(tableName);
       } catch (TableNotFoundException e) {
         // ok
-      }
+      }*/
     }
 
     proxyInstance.close();

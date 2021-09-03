@@ -29,6 +29,11 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Delete rows in Batch. The proxy version only support deleting entire rows. To remove a subset of cells (e.g. all cells from a given column family of a
+ * collection of ranges) use a properly configured Scanner or BatchScanner and a BatchWriter to put delete mutations (which is presumably less efficient than a
+ * properly configured "native" BatchDeleter)
+ */
 public class ProxyBatchDeleter implements BatchDeleter {
 
   /**

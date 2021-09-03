@@ -104,7 +104,7 @@ public class ConnectorBase {
           String[] args = new String[] {"-p", "src/test/resources/mock.props"};
           Proxy.main(args);
         } catch (Exception ex) {
-          ex.printStackTrace();
+          // ex.printStackTrace();
         }
       }
     };

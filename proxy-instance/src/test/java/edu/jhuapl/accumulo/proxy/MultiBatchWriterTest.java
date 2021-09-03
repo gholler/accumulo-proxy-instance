@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class MultiBatchWriterTest extends ConnectorBase {
+  public static final char END_ROW = 'z';
+  public static final char START_ROW = 'a';
   String table1 = "__TEST_TABLE1__";
   String table2 = "__TEST_TABLE2__";
 
@@ -80,25 +82,100 @@ public class MultiBatchWriterTest extends ConnectorBase {
     validateUpdates();
   }
 
+  @Test
+  public void testComplexMutationSequence3() throws Exception {
+    addInsertions();
+
+    validateInsertions();
+
+    // update the value through delete-then-insert mutations
+    addDeleteAndInsert2();
+
+    // check update is ok
+    validateUpdates();
+  }
+
   private void addUpdates() throws Exception {
-    MultiTableBatchWriter bw2 = connector.createMultiTableBatchWriter(new BatchWriterConfig());
-    for (char ch = 'a'; ch <= 'z'; ch++) {
+    MultiTableBatchWriter bw = connector.createMultiTableBatchWriter(new BatchWriterConfig());
+    for (char ch = START_ROW; ch <= END_ROW; ch++) {
       Mutation m = new Mutation(ch + "_row");
       m.put("fam1", "qual1", "val1:11");
       m.put("fam1", "qual2", "val1:22");
       m.put("fam2", "qual1", "val2:11");
       m.put("fam2", "qual2", "val2:22");
       m.put("fam2", "qual3", "val2:33");
-      bw2.getBatchWriter(table1).addMutation(m);
-      bw2.getBatchWriter(table2).addMutation(m);
+      bw.getBatchWriter(table1).addMutation(m);
+      bw.getBatchWriter(table2).addMutation(m);
     }
 
-    bw2.close();
+    bw.close();
+  }
+
+  private void addDeleteAndInsert() throws Exception {
+    // update as a delete then insert sequence with same mutations
+    MultiTableBatchWriter bw = connector.createMultiTableBatchWriter(new BatchWriterConfig());
+    for (char ch = START_ROW; ch <= END_ROW; ch++) {
+      putDeleteInsert(bw, ch, 1, 1);
+      putDeleteInsert(bw, ch, 1, 2);
+      putDeleteInsert(bw, ch, 2, 1);
+      putDeleteInsert(bw, ch, 2, 2);
+      putDeleteInsert(bw, ch, 2, 3);
+
+    }
+
+    bw.close();
+  }
+
+  private void addDeleteAndInsert2() throws Exception {
+    // update as a delete then insert sequence with same mutations
+    MultiTableBatchWriter bw = connector.createMultiTableBatchWriter(new BatchWriterConfig());
+    for (char ch = START_ROW; ch <= END_ROW; ch++) {
+      putDeleteInsert2(bw, ch, 1, 1);
+      putDeleteInsert2(bw, ch, 1, 2);
+      putDeleteInsert2(bw, ch, 2, 1);
+      putDeleteInsert2(bw, ch, 2, 2);
+      putDeleteInsert2(bw, ch, 2, 3);
+
+    }
+
+    bw.close();
+
+  }
+
+  private void putDeleteInsert(MultiTableBatchWriter bw, char ch, int cf, int qual) throws AccumuloException, TableNotFoundException, AccumuloSecurityException {
+
+    Mutation m = new Mutation(ch + "_row");
+
+    String colFam = "fam" + cf;
+    String qualifier = "qual" + qual;
+    m.putDelete(colFam, qualifier);
+    String value = "val" + cf + ":" + qual + "" + qual;
+    m.put(colFam, qualifier, value);
+
+    bw.getBatchWriter(table1).addMutation(m);
+    bw.getBatchWriter(table2).addMutation(m);
+  }
+
+  private void putDeleteInsert2(MultiTableBatchWriter bw, char ch, int cf, int qual) throws AccumuloException, TableNotFoundException,
+      AccumuloSecurityException {
+
+    Mutation m1 = new Mutation(ch + "_row");
+    String colFam = "fam" + cf;
+    String qualifier = "qual" + qual;
+    m1.putDelete(colFam, qualifier);
+    bw.getBatchWriter(table1).addMutation(m1);
+    bw.getBatchWriter(table2).addMutation(m1);
+
+    String value = "val" + cf + ":" + qual + "" + qual;
+    Mutation m2 = new Mutation(ch + "_row");
+    m2.put(colFam, qualifier, value);
+    bw.getBatchWriter(table1).addMutation(m2);
+    bw.getBatchWriter(table2).addMutation(m2);
   }
 
   private void validateUpdates() throws Exception {
         BatchScanner s1 = connector.createBatchScanner(table2, Authorizations.EMPTY, 1);
-        validate(noAuthCount * 26, s1, row -> {
+        validate(noAuthCount, s1, row -> {
                 String fam = row.getKey().getColumnFamily().toString().substring(3);
                 String qual = row.getKey().getColumnQualifier().toString().substring(4);
                 String val = new String(row.getValue().get(), StandardCharsets.UTF_8).substring(3);
@@ -110,7 +187,7 @@ public class MultiBatchWriterTest extends ConnectorBase {
 
   private void validateInsertions() throws Exception {
         BatchScanner s1 = connector.createBatchScanner(table2, Authorizations.EMPTY, 1);
-        validate(noAuthCount * 26, s1,  row -> {
+        validate(noAuthCount, s1,  row -> {
             String fam = row.getKey().getColumnFamily().toString().substring(3);
             String qual = row.getKey().getColumnQualifier().toString().substring(4);
             String val = new String(row.getValue().get(), StandardCharsets.UTF_8).substring(3);
@@ -122,7 +199,7 @@ public class MultiBatchWriterTest extends ConnectorBase {
 
   private void addDeletions() throws Exception {
     MultiTableBatchWriter bw2 = connector.createMultiTableBatchWriter(new BatchWriterConfig());
-    for (char ch = 'a'; ch <= 'z'; ch++) {
+    for (char ch = START_ROW; ch <= END_ROW; ch++) {
       Mutation m = new Mutation(ch + "_row");
       m.putDelete("fam1", "qual1");
       m.putDelete("fam1", "qual2");
@@ -138,7 +215,8 @@ public class MultiBatchWriterTest extends ConnectorBase {
 
   private void addInsertions() throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
     MultiTableBatchWriter bw1 = connector.createMultiTableBatchWriter(new BatchWriterConfig());
-    for (char ch = 'a'; ch <= 'z'; ch++) {
+    noAuthCount = 0;
+    for (char ch = START_ROW; ch <= END_ROW; ch++) {
       Mutation m = new Mutation(ch + "_row");
 
       m.put("fam1", "qual1", "val1:1");
@@ -146,7 +224,7 @@ public class MultiBatchWriterTest extends ConnectorBase {
       m.put("fam2", "qual1", "val2:1");
       m.put("fam2", "qual2", "val2:2");
       m.put("fam2", "qual3", "val2:3");
-      noAuthCount = m.getUpdates().size();
+      noAuthCount += m.getUpdates().size();
       bw1.getBatchWriter(table1).addMutation(m);
       bw1.getBatchWriter(table2).addMutation(m);
     }

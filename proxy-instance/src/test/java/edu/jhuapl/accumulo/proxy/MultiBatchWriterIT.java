@@ -22,8 +22,19 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
 
-public class MultiBatchWriterIT extends MultiBatchWriterTest implements IntegrationTest {}
+public class MultiBatchWriterIT extends MultiBatchWriterTest implements IntegrationTest {
+
+  @BeforeClass
+  public static void onLoad() {
+    /*
+     * System.setProperty("accumulo.proxy.host", "172.17.0.5"); System.setProperty("accumulo.proxy.port", "42424"); System.setProperty("accumulo.proxy.user",
+     * "root"); System.setProperty("accumulo.proxy.password", "accumulo");
+     */
+  }
+
+}

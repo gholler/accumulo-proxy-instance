@@ -148,21 +148,18 @@ class MutationBuffer {
       Map<ByteBuffer,List<ColumnUpdate>> updates = new HashMap<ByteBuffer,List<ColumnUpdate>>();
       for (Mutation m : entry.getValue()) {
         ByteBuffer key = ByteBuffer.wrap(m.getRow());
+
         List<ColumnUpdate> updateList = updates.get(key);
+        // List<ColumnUpdate> updateList = null;
+
         if (updateList == null) {
           updateList = new ArrayList<ColumnUpdate>();
           updates.put(key, updateList);
         }
         ThriftHelper.addThriftColumnUpdates(updateList, m.getUpdates());
+
       }
-      try {
-        connector.getClient().update(writerId, updates);
-        connector.getClient().flush(writerId);
-      } catch (MutationsRejectedException mre) {
-        throw ThriftHelper.fromThrift(mre, connector.getInstance());
-      } catch (TException e) {
-        throw ExceptionFactory.runtimeException(e);
-      }
+      sendUpdates(writerId, updates);
     }
 
     // and reset...
@@ -174,4 +171,65 @@ class MutationBuffer {
     mutations.clear();
   }
 
+  private void sendUpdates(String writerId, Map<ByteBuffer, List<ColumnUpdate>> updates) throws org.apache.accumulo.core.client.MutationsRejectedException {
+
+      // if an entry of the updates map contains a list (d, u) where d is a delete and u is an update for the same cell (cf:q)
+      // then the cell will be marked as a delete even if d is before u => we have to send separately deletes and updates for the same rows
+      // => the grouping strategy get a bit more involved
+        Map<ByteBuffer, List<List<ColumnUpdate>>> updatesList = new HashMap<>();
+
+      separateDeletesFromUpdates(updates, updatesList);
+
+      boolean hasMoreUpdates;
+        do {
+            hasMoreUpdates = false;
+            Map<ByteBuffer, List<ColumnUpdate>> currentMap = new HashMap<>();
+
+            for (ByteBuffer key : updates.keySet()) {
+
+
+                List<List<ColumnUpdate>> lists = updatesList.get(key);
+                // send only the first sublist for each row
+                if (!lists.isEmpty()) {
+                    currentMap.put(key, lists.remove(0));
+                }
+                hasMoreUpdates |= !lists.isEmpty();
+            }
+
+            try {
+                // currentMap may contain updates for many rows, but for a given row, there will be either deletes or updates but not both
+                // typical mixed case is : updating an entity by delete first then insert. For a batch update of entities,
+                // we would then send two buffers : one for deletion and one for insertion, which seems ok performance wise
+                connector.getClient().update(writerId, currentMap);
+                connector.getClient().flush(writerId);
+            } catch (MutationsRejectedException mre) {
+                throw ThriftHelper.fromThrift(mre, connector.getInstance());
+            } catch (TException e) {
+                throw ExceptionFactory.runtimeException(e);
+            }
+        }
+        while(hasMoreUpdates);
+
+
+
+    }
+
+    private void separateDeletesFromUpdates(Map<ByteBuffer, List<ColumnUpdate>> updates, Map<ByteBuffer, List<List<ColumnUpdate>>> updatesList) {
+        for (Entry<ByteBuffer, List<ColumnUpdate>> entry : updates.entrySet()) {
+            ByteBuffer key = entry.getKey();
+            List<ColumnUpdate> cuList = entry.getValue();
+
+            Boolean delete = null;
+            List<ColumnUpdate> cuPart = null;
+            for (ColumnUpdate cu : cuList) {
+                if (delete == null || delete != cu.isDeleteCell()) {
+                    cuPart = new ArrayList<>();
+                    List<List<ColumnUpdate>> list = updatesList.computeIfAbsent(key, k -> new ArrayList<>());
+                    list.add(cuPart);
+                    delete = cu.isDeleteCell();
+                }
+                cuPart.add(cu);
+            }
+        }
+    }
 }
