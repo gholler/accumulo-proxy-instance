@@ -27,6 +27,9 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 public class MultiBatchWriterTest extends ConnectorBase {
   public static final char END_ROW = 'z';
@@ -54,6 +57,32 @@ public class MultiBatchWriterTest extends ConnectorBase {
 
     validateInsertions();
 
+  }
+
+  @Test
+  public void testInsertHugeData()  throws Exception{
+    byte[] data = new byte[2*1024*1024];
+    // fill it with random data
+    Random rnd = new Random(42L);
+    rnd.nextBytes(data);
+
+    BatchWriterConfig config = new BatchWriterConfig();
+    //config.setMaxMemory(10*1024L);
+    try (BatchWriter bw = connector.createBatchWriter(table1, config)) {
+
+      Mutation m = new Mutation("42L");
+      m.put("data".getBytes(), "d".getBytes(), data);
+      bw.addMutation(m);
+      bw.flush();
+    }
+
+    Scanner scanner = connector.createScanner(table1, new Authorizations());
+    scanner.forEach( e -> {
+      Value value = e.getValue();
+      byte[] bytes = value.get();
+      assertEquals(2*1024*1024, bytes.length);
+      //System.out.println("key: "+e.getKey()+" value: "+e.getValue());
+    });
   }
 
   @Test
@@ -180,8 +209,8 @@ public class MultiBatchWriterTest extends ConnectorBase {
                 String qual = row.getKey().getColumnQualifier().toString().substring(4);
                 String val = new String(row.getValue().get(), StandardCharsets.UTF_8).substring(3);
                 String[] parts = val.split(":");
-                Assert.assertEquals("Family and value did not line up.", fam, parts[0]);
-                Assert.assertEquals("Qualifier and value did not line up.", qual + qual, parts[1]);
+                assertEquals("Family and value did not line up.", fam, parts[0]);
+                assertEquals("Qualifier and value did not line up.", qual + qual, parts[1]);
         });
     }
 
@@ -192,8 +221,8 @@ public class MultiBatchWriterTest extends ConnectorBase {
             String qual = row.getKey().getColumnQualifier().toString().substring(4);
             String val = new String(row.getValue().get(), StandardCharsets.UTF_8).substring(3);
             String[] parts = val.split(":");
-            Assert.assertEquals("Family and value did not line up.", fam, parts[0]);
-            Assert.assertEquals("Qualifier and value did not line up.", qual, parts[1]);
+            assertEquals("Family and value did not line up.", fam, parts[0]);
+            assertEquals("Qualifier and value did not line up.", qual, parts[1]);
         });
     }
 
@@ -245,7 +274,7 @@ public class MultiBatchWriterTest extends ConnectorBase {
       rowValidator.validate(entry);
       count++;
     }
-    Assert.assertEquals(expected, count);
+    assertEquals(expected, count);
     scanner.close();
   }
 }

@@ -89,7 +89,7 @@ class ScannerIterator implements Iterator<Entry<Key,Value>> {
     org.apache.accumulo.proxy.thrift.KeyValue kv = results.next();
     org.apache.accumulo.proxy.thrift.Key k = kv.getKey();
 
-    Key key = new Key(k.getRow(), k.getColFamily(), k.getColQualifier(), k.getColVisibility(), k.getTimestamp());
+    Key key = ThriftHelper.fromThrift(k);// new Key(k.getRow(), k.getColFamily(), k.getColQualifier(), k.getColVisibility(), k.getTimestamp());
     return new KeyValue(key, kv.getValue());
   }
 

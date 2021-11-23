@@ -15,13 +15,12 @@
  */
 package edu.jhuapl.accumulo.proxy;
 
+import static edu.jhuapl.accumulo.proxy.ThriftHelper.*;
 import static edu.jhuapl.accumulo.proxy.ThriftHelper.UTF8;
+import static java.lang.System.getProperty;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -36,6 +35,8 @@ import org.apache.accumulo.core.security.SystemPermission;
 import org.apache.accumulo.core.security.TablePermission;
 import org.apache.accumulo.proxy.thrift.AccumuloProxy;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements SecurityOperations as a pass through to a proxy server.
@@ -43,6 +44,9 @@ import org.apache.thrift.TException;
 
 class ProxySecurityOperations implements SecurityOperations {
 
+  private final static Logger log = LoggerFactory.getLogger(ProxySecurityOperations.class);
+
+  public static final ArrayList<byte[]> EMPTY_AUTHORIZATIONS = new ArrayList<>();
   AccumuloProxy.Iface client;
   ByteBuffer token;
 
@@ -121,7 +125,12 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public Authorizations getUserAuthorizations(String principal) throws AccumuloException, AccumuloSecurityException {
     try {
-      return new Authorizations(client.getUserAuthorizations(token, principal));
+      if (shouldHideAuthorizations()) {
+        warnOnce(log, "authorizations hiding requested - returning empty Authorizations object");
+        return new Authorizations(EMPTY_AUTHORIZATIONS);
+      } else {
+        return new Authorizations(client.getUserAuthorizations(token, principal));
+      }
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -133,7 +142,7 @@ class ProxySecurityOperations implements SecurityOperations {
    */
   public boolean hasSystemPermission(String principal, SystemPermission perm) throws AccumuloException, AccumuloSecurityException, InternalError {
     try {
-      return client.hasSystemPermission(token, principal, ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+      return client.hasSystemPermission(token, principal, convertEnum(perm, org.apache.accumulo.proxy.thrift.SystemPermission.class));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -141,7 +150,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public boolean hasTablePermission(String principal, String table, TablePermission perm) throws AccumuloException, AccumuloSecurityException {
     try {
-      return client.hasTablePermission(token, principal, table, ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.TablePermission.class));
+      return client.hasTablePermission(token, principal, table, convertEnum(perm, org.apache.accumulo.proxy.thrift.TablePermission.class));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -149,8 +158,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public boolean hasNamespacePermission(String principal, String namespace, NamespacePermission perm) throws AccumuloException, AccumuloSecurityException {
     try {
-      return client.hasNamespacePermission(token, principal, namespace,
-          ThriftHelper.convertEnum(perm, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+      return client.hasNamespacePermission(token, principal, namespace, convertEnum(perm, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -158,7 +166,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void grantSystemPermission(String principal, SystemPermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.grantSystemPermission(token, principal, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+      client.grantSystemPermission(token, principal, convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
 
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
@@ -167,7 +175,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void grantTablePermission(String principal, String table, TablePermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.grantTablePermission(token, principal, table, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
+      client.grantTablePermission(token, principal, table, convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
 
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
@@ -176,8 +184,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void grantNamespacePermission(String principal, String namespace, NamespacePermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.grantNamespacePermission(token, principal, namespace,
-          ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+      client.grantNamespacePermission(token, principal, namespace, convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }
@@ -185,7 +192,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void revokeSystemPermission(String principal, SystemPermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.revokeSystemPermission(token, principal, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
+      client.revokeSystemPermission(token, principal, convertEnum(permission, org.apache.accumulo.proxy.thrift.SystemPermission.class));
 
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
@@ -194,7 +201,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void revokeTablePermission(String principal, String table, TablePermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.revokeTablePermission(token, principal, table, ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
+      client.revokeTablePermission(token, principal, table, convertEnum(permission, org.apache.accumulo.proxy.thrift.TablePermission.class));
 
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
@@ -203,8 +210,7 @@ class ProxySecurityOperations implements SecurityOperations {
 
   public void revokeNamespacePermission(String principal, String namespace, NamespacePermission permission) throws AccumuloException, AccumuloSecurityException {
     try {
-      client.revokeNamespacePermission(token, principal, namespace,
-          ThriftHelper.convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
+      client.revokeNamespacePermission(token, principal, namespace, convertEnum(permission, org.apache.accumulo.proxy.thrift.NamespacePermission.class));
     } catch (TException e) {
       throw ExceptionFactory.accumuloException(e);
     }

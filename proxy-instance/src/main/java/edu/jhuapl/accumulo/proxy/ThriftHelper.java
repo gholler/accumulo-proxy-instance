@@ -52,6 +52,8 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.TabletId;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.hadoop.io.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to translate between Accumulo<->Thrift objects.
@@ -59,10 +61,25 @@ import org.apache.hadoop.io.Text;
  */
 final class ThriftHelper {
 
+  private static final Logger log = LoggerFactory.getLogger(ThriftHelper.class);
+
+  public static final String HIDE_AUTHORIZATIONS_PROPERTY = "accumulo.proxy.hide.authorizations";
+  public static final String HIDE_AUTHORIZATIONS_ENV = "ACCUMULO_PROXY_HIDE_AUTHORIZATIONS";
   /**
    * UTF-8 charset that can be used to convert String to/from byte arrays.
    */
   static final Charset UTF8 = Charset.forName("UTF-8");
+  private static final Set<String> msgs = new HashSet<>();
+
+  private static final boolean HIDE_AUTHORIZATIONS;
+  public static final byte[] EMPTY_BYTES = {};
+
+  static {
+    HIDE_AUTHORIZATIONS = shouldHideAuthorizations();
+    if (HIDE_AUTHORIZATIONS) {
+      log.info("Hiding authorizations");
+    }
+  }
 
   /**
    * As a utility should not be instantiated.
@@ -171,7 +188,9 @@ final class ThriftHelper {
     tkey.setRow(key.getRow().getBytes());
     tkey.setColFamily(key.getColumnFamily().getBytes());
     tkey.setColQualifier(key.getColumnQualifier().getBytes());
-    tkey.setColVisibility(key.getColumnVisibility().getBytes());
+    if (!HIDE_AUTHORIZATIONS) {
+      tkey.setColVisibility(key.getColumnVisibility().getBytes());
+    }
     tkey.setTimestamp(key.getTimestamp());
     return tkey;
   }
@@ -181,7 +200,7 @@ final class ThriftHelper {
       return null;
     }
 
-    return new Key(tkey.getRow(), tkey.getColFamily(), tkey.getColQualifier(), tkey.getColVisibility(), tkey.getTimestamp());
+    return new Key(tkey.getRow(), tkey.getColFamily(), tkey.getColQualifier(), HIDE_AUTHORIZATIONS ? EMPTY_BYTES : tkey.getColVisibility(), tkey.getTimestamp());
   }
 
   public static List<org.apache.accumulo.proxy.thrift.Range> toThriftRanges(Collection<Range> ranges) {
@@ -503,5 +522,21 @@ final class ThriftHelper {
     } else {
       return ByteBuffer.wrap(val.getBytes());
     }
+  }
+
+  static boolean shouldHideAuthorizations() {
+    String hideAuthorizations = System.getProperty(HIDE_AUTHORIZATIONS_PROPERTY);
+    if (hideAuthorizations == null) {
+      hideAuthorizations = System.getenv(HIDE_AUTHORIZATIONS_ENV);
+    }
+    return Boolean.parseBoolean(hideAuthorizations);
+  }
+
+  public static void warnOnce(Logger log, String msg) {
+    if (!msgs.contains(msg)) {
+      msgs.add(msg);
+      log.warn(msg);
+    }
+
   }
 }

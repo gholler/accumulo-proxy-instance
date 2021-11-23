@@ -31,10 +31,12 @@ public class MultiBatchWriterIT extends MultiBatchWriterTest implements Integrat
 
   @BeforeClass
   public static void onLoad() {
-    /*
-     * System.setProperty("accumulo.proxy.host", "172.17.0.5"); System.setProperty("accumulo.proxy.port", "42424"); System.setProperty("accumulo.proxy.user",
-     * "root"); System.setProperty("accumulo.proxy.password", "accumulo");
-     */
+
+    System.setProperty("accumulo.proxy.host", "172.17.0.5");
+    System.setProperty("accumulo.proxy.port", "42424");
+    System.setProperty("accumulo.proxy.user", "root");
+    System.setProperty("accumulo.proxy.password", "accumulo");
+
   }
 
 }
